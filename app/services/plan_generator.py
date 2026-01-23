@@ -1,5 +1,9 @@
 from datetime import  datetime, date, timedelta
 from app.models.user import User
+from app.models.exercise import Exercise, PlannedWorkoutExercise
+from app.services.exercises import filter_exercises
+from app.services.rules import RULES
+import random
 
 phase_config = {
     "first_trimester": {
@@ -19,41 +23,54 @@ phase_config = {
     }
 }
 
-def generate_plan(user: User, start_date: date, weeks):
+def build_workout_exercises(
+    *,
+    exercises: list[Exercise],
+    phase: str,
+    equipment: list[str],
+) -> list[dict]:
+    filtered = filter_exercises(exercises, phase, equipment)
+
+    selected = random.sample(filtered, k=min(4, len(filtered)))
+
+    rules = RULES.get(phase, {})
+    max_rpe = rules.get("max_rpe", 7)
+
+    result = []
+
+    for ex in selected:
+        rpe = min(ex.base_rpe, max_rpe)
+
+        result.append({
+            "exercise_id": ex.id,
+            "sets": ex.base_sets,
+            "reps": ex.base_reps,
+            "rpe": rpe,
+            "is_modified": ex.allowed_phases.get(phase) == "modified"
+        })
+
+    return result
+
+def generate_training_plan(
+    *,
+    phase: str,
+    start_date: date,
+    weeks: int,
+) -> list[dict]:
+    print('111', phase)
+    config = phase_config[phase]
+    types = config["workout_types"]
+    min_dur, max_dur = config["duration_range"]
+
     plan = []
 
-    # Установим дефолт, если phase не передан (на всякий случай)
-    # if not phase or phase not in phase_config:
-    #     phase = "first_trimester"
-
-    phase = user.current_phase
-
-    config = phase_config[phase]
-    workout_types = config["workout_types"]
-    min_duration, max_duration = config["duration_range"]
-
     for w in range(weeks):
-        week_start = start_date + timedelta(weeks=w)
-
-        strength = exercises[:4]
-        cardio = exercises[4:6]
-
-        # Случайный выбор типа тренировки из доступных
-        workout_type = workout_types[w % len(workout_types)]
-
-        # Случайная длительность в диапазоне (можно сделать фиксированной, если нужно)
-        duration = min_duration + (w % 3) * 5  # плавное снижение в 3-м триместре
-        if duration > max_duration:
-            duration = max_duration
+        duration = min(max_dur, min_dur + w % 3 * 5)
 
         plan.append({
-            "date": week_start,
-            "workout_type": workout_type,
+            "date": start_date + timedelta(weeks=w),
+            "workout_type": types[w % len(types)],
             "duration": duration,
-            "workouts": [
-                {"type": "strength", "exercises": strength},
-                {"type": "cardio", "exercises": cardio}
-            ]
         })
 
     return plan

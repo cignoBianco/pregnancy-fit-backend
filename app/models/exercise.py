@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional, Dict
 from sqlalchemy import Column, JSON
 from app.models.enums import ExerciseCategory, PregnancyPhase, PhasePermission
@@ -29,8 +29,14 @@ class Exercise(SQLModel, table=True):
 
 class PlannedWorkoutExercise(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    planned_workout_id: int = Field(foreign_key="plannedworkout.id")
-    exercise_id: int = Field(foreign_key="exercise.id")
-    sets: int
-    reps: int
-    rpe: int
+    planned_workout_id: int = Field(foreign_key="plannedworkout.id", index=True)
+    exercise_id: int = Field(foreign_key="exercise.id", index=True)
+    sets: int = Field(ge=1)
+    reps: int = Field(ge=1)
+    rpe: int = Field(ge=1, le=10)
+
+    is_modified: bool = Field(default=False)
+
+    planned_workout: Optional["PlannedWorkout"] = Relationship(
+        back_populates="exercises"
+    )
