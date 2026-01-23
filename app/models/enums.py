@@ -6,8 +6,14 @@ class ExerciseCategory(str, Enum):
     mobility = "mobility"
     breathing = "breathing"
 
-PREGNANCY_T1 = "pregnancy_t1"
-PREGNANCY_T2 = "pregnancy_t2"
-PREGNANCY_T3 = "pregnancy_t3"
-POSTPARTUM_0_6 = "postpartum_0_6"
-POSTPARTUM_6_12 = "postpartum_6_12"
+class PregnancyPhase(str, Enum):
+    pregnancy_t1 = "pregnancy_t1"
+    pregnancy_t2 = "pregnancy_t2"
+    pregnancy_t3 = "pregnancy_t3"
+    postpartum_0_6 = "postpartum_0_6"
+    postpartum_6_12 = "postpartum_6_12"
+
+class PhasePermission(str, Enum):
+    allowed = "allowed"
+    modified = "modified"
+    forbidden = "forbidden"
