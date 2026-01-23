@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
+from typing import Optional
 
 from app.core.database import get_session
 from app.api.deps import get_current_user
 from app.models.exercise import Exercise
 from app.schemas.exercise import ExerciseCreate, ExerciseRead, ExerciseUpdate
 from app.models.user import User
+from app.models.enums import ExerciseCategory, PregnancyPhase, PhasePermission
 
 router = APIRouter(prefix="/exercises", tags=["exercises"])
 
@@ -23,9 +25,9 @@ def create_exercise(
 
 @router.get("/", response_model=list[ExerciseRead])
 def list_exercises(
-    category: ExerciseCategory | None = None,
-    phase: PregnancyPhase | None = None,
-    equipment: str | None = Query(None, description="#dumbbell"),
+    category: Optional[ExerciseCategory] = None,
+    phase: Optional[PregnancyPhase] = None,
+    equipment: Optional[str] = Query(None, description="#dumbbell"),
     session: Session = Depends(get_session),
 ):
     query = select(Exercise).where(Exercise.is_active == True)

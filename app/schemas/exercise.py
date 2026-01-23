@@ -1,5 +1,6 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 from pydantic import BaseModel
+from sqlmodel import Field
 from app.models.enums import ExerciseCategory, PregnancyPhase, PhasePermission
 
 class ExerciseBase(BaseModel):
@@ -14,16 +15,16 @@ class ExerciseBase(BaseModel):
     base_reps: int = Field(ge=1)
 
 class ExerciseUpdate(BaseModel):
-    name: str | None = None
-    category: ExerciseCategory | None = None
-    primary_muscles: List[str] | None = None
-    equipment: List[str] | None = None
-    allowed_phases: Dict[PregnancyPhase, PhasePermission] | None = None
-    contraindications: List[str] | None = None
-    base_rpe: int | None = None
-    base_sets: int | None = None
-    base_reps: int | None = None
-    is_active: bool | None = None
+    name: Optional[str] = None
+    category: Optional[ExerciseCategory] = None
+    primary_muscles: Optional[List[str]] = None
+    equipment: Optional[List[str]] = None
+    allowed_phases: Optional[Dict[PregnancyPhase, PhasePermission]] = None
+    contraindications: Optional[List[str]] = None
+    base_rpe: Optional[int] = None
+    base_sets: Optional[int] = None
+    base_reps: Optional[int] = None
+    is_active: Optional[bool] = None
 
 class ExerciseCreate(ExerciseBase):
     pass
