@@ -29,7 +29,7 @@ def register(
         email=data.email,
         hashed_password=hash_password(data.password),
         experience_level=data.experience_level,
-        current_phase=data.current_phase,
+        pregnancy_start_date=data.pregnancy_start_date,
     )
     session.add(user)
     session.commit()

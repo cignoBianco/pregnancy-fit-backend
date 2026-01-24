@@ -2,31 +2,38 @@ from datetime import  datetime, date, timedelta
 from app.models.user import User
 from app.models.exercise import Exercise, PlannedWorkoutExercise
 from app.services.exercises import filter_exercises
+from app.models.enums import PregnancyPhase
 from app.services.rules import RULES
+from typing import Optional
 import random
 
 phase_config = {
-    "first_trimester": {
+    PregnancyPhase.pregnancy_t1: {
         "workout_types": ["strength", "cardio", "yoga"],
         "duration_range": (40, 50),
         "notes": "Можно поддерживать привычный уровень активности. Избегать риска падений."
     },
-    "second_trimester": {
+    PregnancyPhase.pregnancy_t2: {
         "workout_types": ["strength", "prenatal_yoga", "walking", "pelvic_floor"],
         "duration_range": (30, 45),
         "notes": "Избегать упражнений на спине. Акцент на тазовое дно и стабильность."
     },
-    "third_trimester": {
+    PregnancyPhase.pregnancy_t3: {
         "workout_types": ["prenatal_yoga", "walking", "breathing", "swimming"],
         "duration_range": (20, 35),
         "notes": "Снижаем интенсивность. Фокус на расслабление, дыхание и комфорт."
-    }
+    },
+    PregnancyPhase.postpartum_0_6: {
+        "workout_types": ["prenatal_yoga", "walking", "breathing", "swimming"],
+        "duration_range": (20, 35),
+        "notes": "Снижаем интенсивность. Фокус на расслабление, дыхание и комфорт."
+    },
 }
 
 def build_workout_exercises(
     *,
     exercises: list[Exercise],
-    phase: str,
+    phase: Optional[str] = "postpartum_0_6",
     equipment: list[str],
 ) -> list[dict]:
     filtered = filter_exercises(exercises, phase, equipment)
@@ -53,11 +60,12 @@ def build_workout_exercises(
 
 def generate_training_plan(
     *,
-    phase: str,
+    phase: Optional[str] = "postpartum_0_6",
     start_date: date,
     weeks: int,
 ) -> list[dict]:
-    print('111', phase)
+    if phase is None:
+        phase = "postpartum_0_6"
     config = phase_config[phase]
     types = config["workout_types"]
     min_dur, max_dur = config["duration_range"]

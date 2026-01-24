@@ -23,7 +23,7 @@ def generate(
         user_id=user.id,
         start_date=start_date,
         end_date=start_date + timedelta(weeks=weeks),
-        phase=user.current_phase
+        phase=(user.current_phase if user.current_phase else "postpartum_0_6")
     )
     session.add(plan)
     session.commit()
@@ -33,16 +33,7 @@ def generate(
         select(Exercise).where(Exercise.is_active == True)
     ).all()
 
-    current_phase = user.current_phase
-    if current_phase not in ["first_trimester", "second_trimester", "third_trimester"]:
-        if weeks <= 12:
-            current_phase = "first_trimester"
-        elif weeks <= 28:
-            current_phase = "second_trimester"
-        else:
-            current_phase = "third_trimester"
-
-    workouts = generate_training_plan(phase=current_phase, start_date=start_date, weeks=weeks)
+    workouts = generate_training_plan(phase=user.current_phase, start_date=start_date, weeks=weeks)
 
     for w in workouts:
         pw = PlannedWorkout(
@@ -57,7 +48,7 @@ def generate(
 
         pw_exercises = build_workout_exercises(
             exercises=all_exercises,
-            phase=current_phase,
+            phase=user.current_phase,
             equipment=["dumbbell", "pool"],  # Todo: from profile
         )
 
