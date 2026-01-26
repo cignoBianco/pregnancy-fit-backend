@@ -10,6 +10,9 @@ from app.domain.pregnancy import PregnancyDates
 class UpdateUserProfile:
     session: Session
 
+    def __init__(self, repo: ProfileRepository):
+        self.repo = repo
+
     def execute(
         self,
         user: User,
