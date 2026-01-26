@@ -5,7 +5,7 @@ from app.api.deps import get_current_user
 from app.core.database import get_session
 from app.schemas.user import UserUpdate, UserRead
 from app.models.user import User
-from app.domain.pregnancy import PregnancyDates
+from app.use_cases.update_user_profile import UpdateUserProfile
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -29,43 +29,10 @@ def update_me(
             detail="At least one field must be provided"
         )
 
-    has_psd = "pregnancy_start_date" in updates
-    has_dd = "due_date" in updates
     try:
-        if has_psd and has_dd:
-            pregnancy = PregnancyDates.normalize(
-                pregnancy_start_date=updates["pregnancy_start_date"],
-                due_date=updates["due_date"],
-            )
-
-        elif has_psd:
-            pregnancy = PregnancyDates.normalize(
-                pregnancy_start_date=updates["pregnancy_start_date"],
-                due_date=None,
-            )
-
-        elif has_dd:
-            pregnancy = PregnancyDates.normalize(
-                pregnancy_start_date=None,
-                due_date=updates["due_date"],
-            )
-
-        else:
-            pregnancy = PregnancyDates(
-                user.pregnancy_start_date,
-                user.due_date,
-            )
+        return UpdateUserProfile(session).execute(
+            user=user,
+            **data.model_dump(exclude_unset=True)
+        )
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-
-    user.pregnancy_start_date = pregnancy.pregnancy_start_date
-    user.due_date = pregnancy.due_date
-
-    for field, value in updates.items():
-        if field not in {"pregnancy_start_date", "due_date"}:
-            setattr(user, field, value)
-
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    return user
