@@ -8,8 +8,9 @@ from app.models.user_profile import UserProfile
 from app.schemas.user_profile import (
     UserProfileCreate,
     UserProfileRead,
-    UserProfileUpdate,
+    UserProfileUpdate
 )
+from app.domain.repositories.profile_repository import SQLProfileRepository
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -37,17 +38,12 @@ def update_my_profile(
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    profile = session.exec(
-        select(UserProfile).where(UserProfile.user_id == user.id)
-    ).first()
+    repo = SQLProfileRepository(session)
+    use_case = UpdateUserProfile(repo)
 
-    if not profile:
-        profile = UserProfile(user_id=user.id)
-
-    for key, value in data.model_dump(exclude_unset=True).items():
-        setattr(profile, key, value)
-
-    session.add(profile)
-    session.commit()
-    session.refresh(profile)
+    profile = use_case.execute(
+        user_id=user.id,
+        **data.model_dump(exclude_unset=True)
+    )
     return profile
+

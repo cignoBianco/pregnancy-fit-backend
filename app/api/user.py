@@ -5,7 +5,8 @@ from app.api.deps import get_current_user
 from app.core.database import get_session
 from app.schemas.user import UserUpdate, UserRead
 from app.models.user import User
-from app.use_cases.update_user_profile import UpdateUserProfile
+from app.use_cases.update_user import UpdateUser
+from app.infrastructure.repositories.user_repository_sql import SQLUserRepository
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -21,18 +22,14 @@ def update_me(
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    updates = data.model_dump(exclude_unset=True)
+    repo = SQLUserRepository(session)
+    use_case = UpdateUser(repo)
 
-    if not updates:
-        raise HTTPException(
-            status_code=400,
-            detail="At least one field must be provided"
-        )
+    user = use_case.execute(
+        user_id=user.id,
+        full_name=data.full_name,
+        pregnancy_start_date=data.pregnancy_start_date,
+        due_date=data.due_date,
+    )
 
-    try:
-        return UpdateUserProfile(session).execute(
-            user=user,
-            **data.model_dump(exclude_unset=True)
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    return user

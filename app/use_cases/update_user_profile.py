@@ -1,63 +1,34 @@
-from dataclasses import dataclass
 from typing import Optional
-from sqlmodel import Session
-
-from app.models.user import User
 from app.domain.pregnancy import PregnancyDates
+from app.domain.repositories.profile_repository import ProfileRepository
+from app.domain.profile import UserProfile
 
 
-@dataclass
 class UpdateUserProfile:
-    session: Session
-
     def __init__(self, repo: ProfileRepository):
         self.repo = repo
 
     def execute(
         self,
-        user: User,
+        user_id: int,
         *,
         full_name: Optional[str] = None,
         pregnancy_start_date: Optional[str] = None,
         due_date: Optional[str] = None,
-    ) -> User:
+    ) -> UserProfile:
 
-        updates = {
-            "full_name": full_name,
-            "pregnancy_start_date": pregnancy_start_date,
-            "due_date": due_date,
-        }
+        profile = self.repo.get_by_user_id(user_id)
 
-        updates = {k: v for k, v in updates.items() if v is not None}
+        if full_name is not None:
+            profile.full_name = full_name
 
-        has_psd = "pregnancy_start_date" in updates
-        has_dd = "due_date" in updates
+        if pregnancy_start_date is not None or due_date is not None:
+            pregnancy = PregnancyDates.normalize(
+                pregnancy_start_date=pregnancy_start_date or profile.pregnancy_start_date,
+                due_date=due_date or profile.due_date,
+            )
+            profile.pregnancy_start_date = pregnancy.pregnancy_start_date
+            profile.due_date = pregnancy.due_date
 
-        if has_psd or has_dd:
-            if has_psd and has_dd:
-                pregnancy = PregnancyDates.normalize(
-                    updates["pregnancy_start_date"],
-                    updates["due_date"],
-                )
-            elif has_psd:
-                pregnancy = PregnancyDates.normalize(
-                    updates["pregnancy_start_date"],
-                    None,
-                )
-            else:
-                pregnancy = PregnancyDates.normalize(
-                    None,
-                    updates["due_date"],
-                )
-
-            user.pregnancy_start_date = pregnancy.pregnancy_start_date
-            user.due_date = pregnancy.due_date
-
-        if "full_name" in updates:
-            user.full_name = updates["full_name"]
-
-        self.session.add(user)
-        self.session.commit()
-        self.session.refresh(user)
-
-        return user
+        self.repo.save(profile)
+        return profile

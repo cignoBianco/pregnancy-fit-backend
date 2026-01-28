@@ -44,3 +44,41 @@ class PregnancyDates:
             )
 
         return cls(None, None)
+
+
+@dataclass(frozen=True)
+class PregnancyProgress:
+    current_phase: Optional[str]
+    weeks_progress: Optional[int]
+    weeks_total: int = 40
+
+    @classmethod
+    def from_dates(
+        cls,
+        pregnancy_start_date: Optional[date],
+        due_date: Optional[date],
+        today: Optional[date] = None
+    ) -> "PregnancyProgress":
+        from app.services.user_phase import calculate_phase
+
+        today = today or date.today()
+        phase = calculate_phase(
+            pregnancy_start_date=pregnancy_start_date,
+            due_date=due_date,
+            today=today
+        )
+
+        if not pregnancy_start_date and not due_date:
+            return cls(current_phase=None, weeks_progress=None)
+
+        # calculate weeks since start
+        if pregnancy_start_date:
+            weeks = (today - pregnancy_start_date).days // 7
+        else:
+            weeks = 40 - ((due_date - today).days // 7)
+
+        if weeks < 0:
+            return cls(current_phase=None, weeks_progress=None)
+
+        weeks_progress = min(weeks, 40)
+        return cls(current_phase=phase, weeks_progress=weeks_progress)

@@ -5,9 +5,10 @@ from app.models.enums import PregnancyPhase
 def calculate_phase(
      *,
     pregnancy_start_date: Optional[date] = None,
-    due_date: Optional[date] = None
+    due_date: Optional[date] = None,
+    today: Optional[date] = None
 ) -> Optional[str]:
-    today = date.today()
+    today = today or date.today()
 
     if pregnancy_start_date:
         weeks = (today - pregnancy_start_date).days // 7

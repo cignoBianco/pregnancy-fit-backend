@@ -1,9 +1,12 @@
+from datetime import date
 from typing import List, Optional
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 
 from app.models.enums import EquipmentEnum, ContraindicationEnum, TrainingGoalEnum
+from app.services.user_phase import calculate_phase
+
 
 
 class UserProfile(SQLModel, table=True):
@@ -15,6 +18,11 @@ class UserProfile(SQLModel, table=True):
         unique=True,
         nullable=False,
     )
+
+    full_name: Optional[str] = None
+
+    pregnancy_start_date: Optional[date] = None
+    due_date: Optional[date] = None
 
     equipment: List[str] = Field(
         sa_column=Column(JSONB),
@@ -36,3 +44,10 @@ class UserProfile(SQLModel, table=True):
     notes: Optional[str] = None
 
     user: "User" = Relationship(back_populates="profile")
+
+    @property
+    def current_phase(self) -> Optional[str]:
+        return calculate_phase(
+            pregnancy_start_date=self.pregnancy_start_date,
+            due_date=self.due_date,
+        )

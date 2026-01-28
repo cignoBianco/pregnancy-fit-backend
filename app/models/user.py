@@ -14,8 +14,6 @@ class User(SQLModel, table=True):
     full_name: Optional[str] = None
 
     experience_level: Optional[ExperienceLevel] = ExperienceLevel.beginner
-    pregnancy_start_date: Optional[date] = None
-    due_date: Optional[date] = None
 
     is_active: bool = True
     role: str = Field(default="user")  # Todo: enum user | coach | admin
@@ -24,10 +22,3 @@ class User(SQLModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={"uselist": False}
     )
-
-    @property
-    def current_phase(self) -> Optional[str]:
-        return calculate_phase(
-            pregnancy_start_date=self.pregnancy_start_date,
-            due_date=self.due_date,
-        )
