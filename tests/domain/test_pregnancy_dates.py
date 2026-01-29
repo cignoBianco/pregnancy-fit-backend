@@ -1,5 +1,5 @@
 from app.domain.pregnancy import PregnancyDates
-from datetime import date
+from datetime import date, timedelta
 
 def test_due_date_only_recalculates_start():
     p = PregnancyDates.normalize(
@@ -8,4 +8,5 @@ def test_due_date_only_recalculates_start():
     )
 
     assert p.due_date == date(2026, 9, 7)
-    assert p.pregnancy_start_date == date(2025, 11, 1)
+    assert p.pregnancy_start_date == date(2026, 9, 7) - timedelta(days=280)
+
