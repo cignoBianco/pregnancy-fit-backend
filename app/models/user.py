@@ -1,5 +1,6 @@
 from datetime import date
 from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Column, Enum as SAEnum
 from typing import Optional
 
 from app.services.user_phase import calculate_phase
@@ -13,7 +14,16 @@ class User(SQLModel, table=True):
 
     full_name: Optional[str] = None
 
-    experience_level: Optional[ExperienceLevel] = ExperienceLevel.beginner
+    experience_level: Optional[ExperienceLevel] = Field(
+        default=ExperienceLevel.beginner,
+        sa_column=Column(
+            SAEnum(
+                ExperienceLevel,
+                name="experiencelevel",
+                create_type=False,  # ВАЖНО
+            )
+        )
+    )
 
     is_active: bool = True
     role: str = Field(default="user")  # Todo: enum user | coach | admin

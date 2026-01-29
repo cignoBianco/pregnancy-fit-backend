@@ -21,6 +21,9 @@ class UserProfileBase(BaseModel):
     current_phase: Optional[str]
     progress_weeks: Optional[int]
 
+    class Config:
+        from_attributes = True
+
     @validator("equipment")
     def no_duplicates(cls, v):
         if len(v) != len(set(v)):

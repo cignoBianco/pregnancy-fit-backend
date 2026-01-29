@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import List, Optional
 
@@ -18,7 +18,7 @@ class UserProfile:
     training_goals: List[TrainingGoalEnum] = None
     notes: Optional[str] = None
 
-     _events: List[object] = field(default_factory=list, init=False, repr=False)
+    _events: List[object] = field(default_factory=list, init=False, repr=False)
 
     def update_pregnancy_dates(
         self,

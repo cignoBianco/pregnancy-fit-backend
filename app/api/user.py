@@ -5,8 +5,8 @@ from app.api.deps import get_current_user
 from app.core.database import get_session
 from app.schemas.user import UserUpdate, UserRead
 from app.models.user import User
-from app.use_cases.update_user import UpdateUser
-from app.infrastructure.repositories.user_repository_sql import SQLUserRepository
+from app.use_cases.update_user_profile import UpdateUserProfile
+from app.infrastructure.repositories.profile_repository_sql import SQLProfileRepository
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -22,8 +22,8 @@ def update_me(
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    repo = SQLUserRepository(session)
-    use_case = UpdateUser(repo)
+    repo = SQLProfileRepository(session)
+    use_case = UpdateUserProfile(repo)
 
     user = use_case.execute(
         user_id=user.id,

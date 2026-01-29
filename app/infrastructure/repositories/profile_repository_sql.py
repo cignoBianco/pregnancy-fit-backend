@@ -1,6 +1,7 @@
 from sqlmodel import Session, select
 from app.domain.profile import UserProfile as DomainProfile
 from app.models.user_profile import UserProfile as ORMProfile
+from app.domain.pregnancy import PregnancyProgress
 
 
 class SQLProfileRepository:
@@ -49,3 +50,16 @@ class SQLProfileRepository:
         self.session.add(orm_profile)
         self.session.commit()
         self.session.refresh(orm_profile)
+
+
+    def to_read_model(self, orm_profile: ORMProfile):
+        progress = PregnancyProgress.from_dates(
+            orm_profile.pregnancy_start_date,
+            orm_profile.due_date
+        )
+        return {
+            **orm_profile.model_dump(),
+            "current_phase": progress.current_phase,
+            "progress_weeks": progress.weeks_progress
+        }
+
