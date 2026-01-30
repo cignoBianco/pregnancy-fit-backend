@@ -1,5 +1,5 @@
 from typing import Optional
-from app.domain.pregnancy import PregnancyDates, PregnancyProgress
+from app.domain.pregnancy import PregnancyDates
 from app.domain.repositories.profile_repository import ProfileRepository
 from app.domain.profile import UserProfile
 

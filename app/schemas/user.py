@@ -32,28 +32,12 @@ class UserUpdate(BaseModel):
     pregnancy_start_date: Optional[date] = None
     due_date: Optional[date] = None
 
-    # @model_validator(mode="after")
-    # def validate_dates(self):
-    #     psd = self.pregnancy_start_date
-    #     dd = self.due_date
-
-    #     if psd and dd:
-    #         expected_dd = psd + timedelta(weeks=40)
-    #         if abs((expected_dd - dd).days) > 7:
-    #             raise ValueError(
-    #                 "pregnancy_start_date and due_date contradict each other"
-    #             )
-
-    #     return self
-
 
 class UserRead(BaseModel):
     id: int
     email: str
     full_name: Optional[str]
-    pregnancy_start_date: Optional[date]
-    due_date: Optional[date]
-    current_phase: Optional[str]
+    experience_level: Optional[ExperienceLevel]
 
     class Config:
         from_attributes = True

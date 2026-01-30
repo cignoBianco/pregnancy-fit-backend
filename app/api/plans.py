@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
+from app.domain.profile import UserProfile as DomainUserProfile
+
 from datetime import date, timedelta
+from typing import List
 
 from app.models.exercise import PlannedWorkoutExercise, Exercise
 
@@ -8,57 +11,62 @@ from app.api.deps import get_current_user
 from app.core.database import get_session
 from app.models.plan import TrainingPlan, PlannedWorkout
 from app.models.user import User
+from app.models.user_profile import UserProfile
+from app.models.workout import PlannedWorkoutRead
 from app.services.plan_generator import generate_training_plan, phase_config, build_workout_exercises
+from app.infrastructure.repositories.plan_repository_sql import SQLPlanRepository
+from app.use_cases.generate_training_plan import GenerateTrainingPlanUseCase
+from app.domain.pregnancy import PregnancyProgress
+
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
-@router.post("/generate")
-def generate(
-    start_date: date,
-    weeks: int,
-    session: Session = Depends(get_session),
+@router.get("/me")
+def get_my_plans(session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    repo = SQLPlanRepository(session)
+    return repo.get_user_plans(user.id)
+
+@router.post("/plans/generate", response_model=List[PlannedWorkoutRead])
+def generate_plan(
     user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
-    plan = TrainingPlan(
-        user_id=user.id,
-        start_date=start_date,
-        end_date=start_date + timedelta(weeks=weeks),
-        phase=(user.current_phase if user.current_phase else "postpartum_0_6")
+    db_profile = session.exec(
+        select(UserProfile).where(UserProfile.user_id == user.id)
+    ).first()
+
+    if not db_profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    domain_profile = DomainUserProfile(
+        user_id=db_profile.user_id,
+        full_name=db_profile.full_name,
+        pregnancy_start_date=db_profile.pregnancy_start_date,
+        due_date=db_profile.due_date,
+        equipment=db_profile.equipment,
+        contraindications=db_profile.contraindications,
+        training_goals=db_profile.training_goals,
+        notes=db_profile.notes,
     )
-    session.add(plan)
-    session.commit()
-    session.refresh(plan)
 
-    all_exercises = session.exec(
-        select(Exercise).where(Exercise.is_active == True)
-    ).all()
+    exercises = session.exec(select(Exercise)).all()
 
-    workouts = generate_training_plan(phase=user.current_phase, start_date=start_date, weeks=weeks)
+    plan_repo = SQLPlanRepository(session)
+    use_case = GenerateTrainingPlanUseCase(
+        plan_repo=plan_repo,
+        exercises=exercises,
+    )
 
-    for w in workouts:
-        pw = PlannedWorkout(
-            plan_id=plan.id,
-            date=w["date"],
-            workout_type=w["workout_type"],
-            duration=w["duration"],
-        )
-        session.add(pw)
-        session.commit()
-        session.refresh(pw)
+    workouts = use_case.execute(domain_profile)
 
-        pw_exercises = build_workout_exercises(
-            exercises=all_exercises,
-            phase=user.current_phase,
-            equipment=["dumbbell", "pool"],  # Todo: from profile
-        )
+    return [PlannedWorkoutRead.from_orm(w) for w in workouts]
 
-        for ex in pw_exercises:
-            session.add(
-                PlannedWorkoutExercise(
-                    planned_workout_id=pw.id,
-                    **ex
-                )
-            )
 
-    session.commit()
-    return {"plan_id": plan.id}
+@router.delete("/{plan_id}")
+def delete_plan(plan_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    repo = SQLPlanRepository(session)
+    plan = repo.get_plan(plan_id, user.id)
+    if not plan:
+        raise HTTPException(404, "Plan not found")
+    repo.delete_plan(plan)
+    return {"status": "deleted"}

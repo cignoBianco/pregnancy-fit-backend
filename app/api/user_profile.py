@@ -33,9 +33,17 @@ def get_my_profile(
     )
 
     return UserProfileRead(
-        **profile.model_dump(),
+        id=profile.id,
+        user_id=profile.user_id,
+        full_name=profile.full_name,
+        pregnancy_start_date=profile.pregnancy_start_date,
+        due_date=profile.due_date,
+        equipment=profile.equipment,
+        contraindications=profile.contraindications,
+        training_goals=profile.training_goals,
+        notes=profile.notes,
         current_phase=progress.current_phase,
-        progress_weeks=progress.weeks_progress,
+        progress_weeks=progress.weeks_progress
     )
 
 
@@ -50,7 +58,24 @@ def update_my_profile(
 
     profile = use_case.execute(
         user_id=user.id,
-        **data.model_dump(exclude_unset=True)
+        **data.dict(exclude_unset=True)
     )
-    return profile
 
+    progress = PregnancyProgress.from_dates(
+        profile.pregnancy_start_date,
+        profile.due_date
+    )
+
+    return UserProfileRead(
+        id=profile.id,
+        user_id=profile.user_id,
+        full_name=profile.full_name,
+        pregnancy_start_date=profile.pregnancy_start_date,
+        due_date=profile.due_date,
+        equipment=profile.equipment,
+        contraindications=profile.contraindications,
+        training_goals=profile.training_goals,
+        notes=profile.notes,
+        current_phase=progress.current_phase,
+        progress_weeks=progress.weeks_progress
+    )

@@ -1,10 +1,10 @@
 from datetime import date
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Column, Enum as SAEnum
-from typing import Optional
-
+from typing import Optional, List
 from app.services.user_phase import calculate_phase
 from app.models.enums import ExperienceLevel
+from enum import Enum
 
 
 class User(SQLModel, table=True):

@@ -9,6 +9,9 @@ class TrainingPlan(SQLModel, table=True):
     end_date: date
     phase: str
 
+    workouts: List["PlannedWorkout"] = Relationship(back_populates="plan")
+
+
 class PlannedWorkout(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     plan_id: int = Field(foreign_key="trainingplan.id", index=True)
@@ -19,3 +22,5 @@ class PlannedWorkout(SQLModel, table=True):
     exercises: List["PlannedWorkoutExercise"] = Relationship(
         back_populates="planned_workout"
     )
+    plan: Optional[TrainingPlan] = Relationship(back_populates="workouts")
+
