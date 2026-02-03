@@ -47,8 +47,6 @@ class UserProfile(SQLModel, table=True):
 
     @property
     def current_phase(self) -> Optional[str]:
-        if not self.pregnancy_start_date or not self.due_date:
-            return None
         return calculate_phase(
             pregnancy_start_date=self.pregnancy_start_date,
             due_date=self.due_date,

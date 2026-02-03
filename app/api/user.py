@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_session
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.get("/me", response_model=UserRead)
 def get_me(user: User = Depends(get_current_user)):
-    return UserRead.from_orm(user)
+    return user
 
 
 @router.put("/me", response_model=UserRead)
@@ -22,9 +22,14 @@ def update_me(
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    for field, value in user_update.dict(exclude_unset=True).items():
-        setattr(user, field, value)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    return UserRead.from_orm(user)
+    repo = SQLProfileRepository(session)
+    use_case = UpdateUserProfile(repo)
+
+    user = use_case.execute(
+        user_id=user.id,
+        full_name=data.full_name,
+        pregnancy_start_date=data.pregnancy_start_date,
+        due_date=data.due_date,
+    )
+
+    return user
